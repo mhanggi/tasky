@@ -2,17 +2,6 @@
 
 config_file="$HOME/.config/tasky/tasks.json"
 
-function confirm_action {
-  local message="${1:-"Confirm?"}"
-  local response=$(echo -e "No\nYes" | rofi -dmenu -i -p "$message ")
-
-  if [ "$response" = "Yes" ]; then
-    true;
-  else
-    false;
-  fi
-}
-
 function send_notification {
   local task_json=$1
 
@@ -34,14 +23,6 @@ function run_task {
   fi
   
   task_command=$(echo $task_json | jq ".command")
-  confirm=$(echo $task_json | jq ".confirm")
-  
-  # Check whether we need confirmation to run this task
-  if [[ $confirm == "true" ]]; then
-    if ! confirm_action 'Confirm $selected?'; then
-      exit
-    fi
-  fi
   
   # Run the task
   eval "\"$task_command\" > /dev/null &"
