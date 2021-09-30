@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-config_file="$HOME/.config/myrmidon/tasks.json"
+config_file="$HOME/.config/tasky/tasks.json"
 
 function confirm_action {
   local message="${1:-"Confirm?"}"
