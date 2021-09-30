@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+config_file="$HOME/.config/myrmidon/tasks.json"
+
+function confirm_action {
+  local message="${1:-"Confirm?"}"
+  local response=$(echo -e "No\nYes" | rofi -dmenu -i -p "$message ")
+
+  if [ "$response" = "Yes" ]; then
+    true;
+  else
+    false;
+  fi
+}
+
+function send_notification {
+  local task_json=$1
+
+  notification=$(echo $task_json | jq ".notification")
+  if [ ! "$notification" == 'null' ]
+  then
+      eval "notify-send $notification > /dev/null &"
+  fi
+}
+
+function run_task {
+  local selected=$1
+
+  task_json=$(cat $config_file | jq ".[] | select(.name == \"$selected\")")
+  
+  # Exit if no task was found
+  if [[ $task_json == "" ]]; then
+    exit 1
+  fi
+  
+  task_command=$(echo $task_json | jq ".command")
+  confirm=$(echo $task_json | jq ".confirm")
+  
+  # Check whether we need confirmation to run this task
+  if [[ $confirm == "true" ]]; then
+    if ! confirm_action 'Confirm $selected?'; then
+      exit
+    fi
+  fi
+  
+  # Run the task
+  eval "\"$task_command\" > /dev/null &"
+  send_notification "$task_json"
+}
+
+function print_tasks {
+  tasks=$(cat $config_file)
+  task_names=$(cat $config_file | jq -j 'map(.name) | join("\n")')
+  
+  echo "$task_names"
+}
+
+if [ -z "$1" ]; then 
+  print_tasks
+  exit
+fi
+
+run_task "$1"
